@@ -188,7 +188,7 @@
         if (!this.isValid(iban)){
             throw new Error('Invalid Iban');
         }
-        return this._regex().exec(iban.slice(4)).slice(1).join(separator)[this.accountNumberPosition];
+        return this.toBBAN(iban, '-').split('-')[this.accountNumberPosition];
     };
 
     /**
