@@ -138,11 +138,12 @@
      * @param example an example valid IBAN
      * @constructor
      */
-    function Specification(countryCode, length, structure, example){
+    function Specification(countryCode, length, structure, accountNumberPosition, example){
 
         this.countryCode = countryCode;
         this.length = length;
         this.structure = structure;
+        this.accountNumberPosition = accountNumberPosition;
         this.example = example;
     }
 
@@ -175,6 +176,19 @@
      */
     Specification.prototype.toBBAN = function(iban, separator) {
         return this._regex().exec(iban.slice(4)).slice(1).join(separator);
+    };
+
+    /**
+     * Convert the passed IBAN to a country-specific account number.
+     *
+     * @param iban the IBAN to convert
+     * @returns {string} the account number
+     */
+    Specification.prototype.toAccountNumber = function(iban) {
+        if (!this.isValid(iban)){
+            throw new Error('Invalid Iban');
+        }
+        return this._regex().exec(iban.slice(4)).slice(1).join(separator)[this.accountNumberPosition];
     };
 
     /**
@@ -230,7 +244,7 @@
     addSpecification(new Specification("CR", 22, "F04F14",             "CR72012300000171549015"));
     addSpecification(new Specification("CY", 28, "F03F05A16",          "CY17002001280000001200527600"));
     addSpecification(new Specification("CZ", 24, "F04F06F10",          "CZ6508000000192000145399"));
-    addSpecification(new Specification("DE", 22, "F08F10",             "DE89370400440532013000"));
+    addSpecification(new Specification("DE", 22, "F08F10", 2,             "DE89370400440532013000"));
     addSpecification(new Specification("DK", 18, "F04F09F01",          "DK5000400440116243"));
     addSpecification(new Specification("DO", 28, "U04F20",             "DO28BAGR00000001212453611324"));
     addSpecification(new Specification("EE", 20, "F02F02F11F01",       "EE382200221020145685"));
@@ -383,6 +397,21 @@
         }
         return countryStructure.toBBAN(iban, separator);
     };
+
+    /**
+     * Convert an IBAN to a account number.
+     *
+     * @param iban
+     * @returns {string|*}
+     */
+    exports.toAccountNumber = function(iban){
+        iban = electronicFormat(iban);
+        var countryStructure = countries[iban.slice(0,2)];
+        if (!countryStructure) {
+            throw new Error('No country with code ' + iban.slice(0,2));
+        }
+        return countryStructure.toAccountNumber(iban);
+    }
 
     /**
      * Convert the passed BBAN to an IBAN for this country specification.
